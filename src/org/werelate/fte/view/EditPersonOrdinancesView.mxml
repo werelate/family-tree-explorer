@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<view:EditOrdinancesView xmlns:mx="http://www.adobe.com/2006/mxml" xmlns:view="org.werelate.fte.view.*"
+	layout="vertical" title="LDS Ordinances" showCloseButton="true" defaultButton="{ok}"
+	width="300" borderAlpha="1.0">
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.logging.ILogger;
+			import mx.logging.Log;
+			import org.werelate.fte.model.TempleCodes;
+			import org.werelate.fte.model.Page;
+			
+			private static const logger:ILogger = Log.getLogger("EditPersonOrdinancesView");
+
+			[Bindable]
+			private var baptism:XML;
+			[Bindable]
+			private var endowment:XML;
+			[Bindable]
+			private var sealParents:XML;
+			[Bindable]
+			private var baptismTemple:Object;
+			[Bindable]
+			private var endowmentTemple:Object;
+			[Bindable]
+			private var sealParentsTemple:Object;
+			[Bindable]
+			private var baptismSources:ArrayCollection;
+			[Bindable]
+			private var endowmentSources:ArrayCollection;
+			[Bindable]
+			private var sealParentsSources:ArrayCollection;
+
+			override public function init(xml:XML):void {
+//				logger.warn("init " + xml.toXMLString());
+				baptism = xml.BAPL[0] != null ? xml.BAPL[0] : new XML("<BAPL/>");
+				baptismTemple = TempleCodes.getTemple(baptism.@temple);
+				baptismSources = getSources(baptism.source_citation);
+				endowment = xml.ENDL[0] != null ? xml.ENDL[0] : new XML("<ENDL/>");
+				endowmentTemple = TempleCodes.getTemple(endowment.@temple);
+				endowmentSources = getSources(endowment.source_citation);
+				sealParents = xml.SLGC[0] != null ? xml.SLGC[0] : new XML("<SLGC/>");
+				sealParentsTemple = TempleCodes.getTemple(sealParents.@temple);
+				sealParentsSources = getSources(sealParents.source_citation);
+			}
+			
+			private function constructOrdinances():XMLList {
+				var xml:XML = new XML("<data/>");
+				updateOrdinance(baptism, baptismTemple, baptismSources);
+				updateOrdinance(endowment, endowmentTemple, endowmentSources);
+				updateOrdinance(sealParents, sealParentsTemple, sealParentsSources);
+				xml.appendChild(baptism);
+				xml.appendChild(endowment);
+				xml.appendChild(sealParents);
+				return xml.children();
+			}
+		]]>
+	</mx:Script>
+		
+	<mx:VBox width="100%" height="100%">
+		<mx:TabNavigator width="100%">
+			<mx:VBox width="100%" label="Baptism">
+				<mx:Grid width="100%">
+					<mx:GridRow width="100%">
+						<mx:GridItem width="33%">
+							<mx:Label text="Date"/>
+						</mx:GridItem>
+						<mx:GridItem width="67%">
+							<mx:TextInput text="{baptism.@date}" change="baptism.@date=TextInput(event.target).text"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100%">
+						<mx:GridItem width="33%">
+							<mx:Label text="Temple"/>
+						</mx:GridItem>
+						<mx:GridItem width="67%">
+							<mx:ComboBox dataProvider="{TempleCodes.codes}" width="100%" labelFunction="getTemplePlace" 
+								selectedItem="{baptismTemple}" change="baptismTemple=ComboBox(event.target).selectedItem"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100%">
+						<mx:GridItem width="33%">
+							<mx:Label text="  or Place"/>
+						</mx:GridItem>
+						<mx:GridItem width="67%">
+							<mx:TextInput text="{baptism.@place}" change="baptism.@place=TextInput(event.target).text"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100%">
+						<mx:GridItem width="33%">
+							<mx:Label text="Status"/>
+						</mx:GridItem>
+						<mx:GridItem width="67%">
+							<mx:TextInput text="{baptism.@stat}" change="baptism.@stat=TextInput(event.target).text"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100%">
+						<mx:GridItem width="33%">
+							<mx:Label text="  Date"/>
+						</mx:GridItem>
+						<mx:GridItem width="67%">
+							<mx:TextInput text="{baptism.@statdate}" change="baptism.@statdate=TextInput(event.target).text"/>
+						</mx:GridItem>
+					</mx:GridRow>
+				</mx:Grid>
+		    	<mx:DataGrid width="100%" rowCount="3" editable="true" height="72"
+		    		dataProvider="{baptismSources}" verticalScrollPolicy="off"
+		    		itemEditEnd="updateSource(baptismSources, event)">
+			      <mx:columns>
+		   			<mx:DataGridColumn headerText="Title" dataField="title" />
+					   <mx:DataGridColumn headerText="Text" dataField="text" />
+					</mx:columns>
+				</mx:DataGrid>
+			</mx:VBox>
+			<mx:VBox width="100%" label="Endowment">
+				<mx:Grid width="100%">
+					<mx:GridRow width="100%">
+						<mx:GridItem width="33%">
+							<mx:Label text="Date"/>
+						</mx:GridItem>
+						<mx:GridItem width="67%">
+							<mx:TextInput text="{endowment.@date}" change="endowment.@date=TextInput(event.target).text"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100%">
+						<mx:GridItem width="33%">
+							<mx:Label text="Temple"/>
+						</mx:GridItem>
+						<mx:GridItem width="67%">
+							<mx:ComboBox dataProvider="{TempleCodes.codes}" width="100%" labelFunction="getTemplePlace" 
+								selectedItem="{endowmentTemple}" change="endowmentTemple=ComboBox(event.target).selectedItem"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100%">
+						<mx:GridItem width="33%">
+							<mx:Label text="  or Place"/>
+						</mx:GridItem>
+						<mx:GridItem width="67%">
+							<mx:TextInput text="{endowment.@place}" change="endowment.@place=TextInput(event.target).text"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100%">
+						<mx:GridItem width="33%">
+							<mx:Label text="Status"/>
+						</mx:GridItem>
+						<mx:GridItem width="67%">
+							<mx:TextInput text="{endowment.@stat}" change="endowment.@stat=TextInput(event.target).text"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100%">
+						<mx:GridItem width="33%">
+							<mx:Label text="  Date"/>
+						</mx:GridItem>
+						<mx:GridItem width="67%">
+							<mx:TextInput text="{endowment.@statdate}" change="endowment.@statdate=TextInput(event.target).text"/>
+						</mx:GridItem>
+					</mx:GridRow>
+				</mx:Grid>
+		    	<mx:DataGrid width="100%" rowCount="3" editable="true" height="72"
+		    		dataProvider="{endowmentSources}" verticalScrollPolicy="off"
+		    		itemEditEnd="updateSource(endowmentSources, event)">
+			      <mx:columns>
+		   			<mx:DataGridColumn headerText="Title" dataField="title" />
+					   <mx:DataGridColumn headerText="Text" dataField="text" />
+					</mx:columns>
+				</mx:DataGrid>
+			</mx:VBox>
+			<mx:VBox width="100%" label="Seal to Parents">
+				<mx:Grid width="100%">
+					<mx:GridRow width="100%">
+						<mx:GridItem width="33%">
+							<mx:Label text="Date"/>
+						</mx:GridItem>
+						<mx:GridItem width="67%">
+							<mx:TextInput text="{sealParents.@date}" change="sealParents.@date=TextInput(event.target).text"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100%">
+						<mx:GridItem width="33%">
+							<mx:Label text="Temple"/>
+						</mx:GridItem>
+						<mx:GridItem width="67%">
+							<mx:ComboBox dataProvider="{TempleCodes.codes}" width="100%" labelFunction="getTemplePlace" 
+								selectedItem="{sealParentsTemple}" change="sealParentsTemple=ComboBox(event.target).selectedItem"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100%">
+						<mx:GridItem width="33%">
+							<mx:Label text="  or Place"/>
+						</mx:GridItem>
+						<mx:GridItem width="67%">
+							<mx:TextInput text="{sealParents.@place}" change="sealParents.@place=TextInput(event.target).text"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100%">
+						<mx:GridItem width="33%">
+							<mx:Label text="Status"/>
+						</mx:GridItem>
+						<mx:GridItem width="67%">
+							<mx:TextInput text="{sealParents.@stat}" change="sealParents.@stat=TextInput(event.target).text"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow width="100%">
+						<mx:GridItem width="33%">
+							<mx:Label text="  Date"/>
+						</mx:GridItem>
+						<mx:GridItem width="67%">
+							<mx:TextInput text="{sealParents.@statdate}" change="sealParents.@statdate=TextInput(event.target).text"/>
+						</mx:GridItem>
+					</mx:GridRow>
+				</mx:Grid>
+		    	<mx:DataGrid width="100%" rowCount="3" editable="true" height="72"
+		    		dataProvider="{sealParentsSources}" verticalScrollPolicy="off"
+		    		itemEditEnd="updateSource(sealParentsSources, event)">
+			      <mx:columns>
+		   			<mx:DataGridColumn headerText="Title" dataField="title" />
+					   <mx:DataGridColumn headerText="Text" dataField="text" />
+					</mx:columns>
+				</mx:DataGrid>
+			</mx:VBox>
+		</mx:TabNavigator>
+		<mx:HBox horizontalAlign="right" width="100%">
+			<mx:Button id="ok" label="Ok" click="dispatchEvent(new EditOrdinancesEvent(constructOrdinances()))"/>
+			<mx:Button label="Cancel" click="dispatchEvent(new Event('close'))"/>
+		</mx:HBox>
+	</mx:VBox>
+</view:EditOrdinancesView>

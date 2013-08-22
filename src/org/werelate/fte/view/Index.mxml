@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%">
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.SortField;
+			import mx.collections.Sort;
+			import mx.states.SetEventHandler;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.events.ListEvent;
+			import org.werelate.fte.util.StringUtils;
+			import org.werelate.fte.model.Pages;
+			import mx.logging.ILogger;
+			import mx.logging.Log;
+			import mx.collections.ArrayCollection;
+			import mx.managers.HistoryManager;
+			
+			import org.werelate.fte.command.Controller;
+			import org.werelate.fte.model.Model;
+			import org.werelate.fte.model.Page;
+						
+			private static const logger:ILogger = Log.getLogger("Index");
+
+			private var mySelectedPage:Page;
+
+	 		public function set selectedPage(page:Page):void {
+//				logger.debug("set selectedPage " + (page == null ? "null" : page.title));
+				mySelectedPage = page;
+				selectPage();
+	 		}
+	 		
+			// selectedNamespace is -1 to select all namespaces except people and families
+	 		public function set selectedNamespace(selectedNamespace:int):void {
+//	 			logger.warn("set selectedNamespace " + selectedNamespace);
+	 			for each (var nsObject:Object in Model.instance.indexNamespaces) {
+	 				if (nsObject.ns == selectedNamespace) {
+	 					namespaceComboBox.selectedItem = nsObject;
+	 					break;
+	 				}
+	 			}
+	 			
+	 			var initSortField:SortField;
+	 			var initSort:Sort;
+	 			
+	 			if (selectedNamespace == Model.PERSON_NS) {
+	 				dg.columns = personColumns;
+	 				initSortField = new SortField("nameSortKey");
+	 				initSort = new Sort();
+	 				initSort.fields = [initSortField];
+	 				ArrayCollection(dg.dataProvider).sort = initSort;
+	 				ArrayCollection(dg.dataProvider).refresh();
+	 			}
+	 			else if (selectedNamespace == Model.FAMILY_NS) {
+	 				dg.columns = familyColumns;
+	 				initSortField = new SortField("husbandSortKey");
+	 				initSort = new Sort();
+	 				initSort.fields = [initSortField];
+	 				ArrayCollection(dg.dataProvider).sort = initSort;
+	 				ArrayCollection(dg.dataProvider).refresh();
+	 			}
+	 			else if (selectedNamespace == -1) {
+	 				dg.columns = allColumns;
+		 			dg.dataProvider.refresh();
+	 			}
+	 			else {
+	 				dg.columns = otherColumns;
+		 			dg.dataProvider.refresh();
+	 			}
+//	 			if (selectedNamespace == Model.PERSON_NS || selectedNamespace == Model.FAMILY_NS) {
+//	 				Controller.instance.cacheAllPages();
+//	 			}
+	 		}
+	 		
+	 		public function set findText(text:String):void {
+	 			findInput.text = text;
+	 			if (text.length > 0) {
+	 				Controller.instance.cacheAllPages();
+		 		}
+	 		}
+	 		
+	 		public function set pages(pages:ArrayCollection):void {
+//	 			logger.debug("set pages");
+	 			dg.dataProvider = pages;
+				selectPage();
+	 		}
+	 		
+	 		private function selectNamespace(event:Event):void {
+	 			Model.instance.selectedNamespace = namespaceComboBox.selectedItem.ns;
+	 		}
+	 		
+	 		private function beforeFindTextChanged(event:Event):void {
+	 			
+	 		}
+	 		
+	 		private function find(event:Event):void {
+	 			if (Model.instance.findText != findInput.text) {
+		 			Model.instance.findText = findInput.text;
+		 		}
+	 		}
+	 		
+			private function itemClick(event:ListEvent):void {
+				if (event.rowIndex >= 0) {
+					var page:Page = Page(dg.dataProvider.getItemAt(event.rowIndex));
+//					logger.debug("itemClick " + page.title);
+					Controller.instance.loadPage(page);
+				}
+			}
+			
+			private function selectPage():void {
+				if (Pages.getPageIndex(ArrayCollection(dg.dataProvider), mySelectedPage) >= 0) {
+//					logger.debug("selectPage " + mySelectedPage.title);
+		 			dg.selectedItem = mySelectedPage;
+		 		}
+		 		else {
+//					logger.debug("selectPage " + (mySelectedPage == null ? "null" : "not found"));
+		 			dg.selectedItem = null;
+		 		}
+			}
+
+//	 		private function sortBirthDate(o1:Object, o2:Object):int {
+//	 			return StringUtils.stricmp(o1.birthSortKey, o2.birthSortKey);
+//	 		}
+//	 		private function sortDeathDate(o1:Object, o2:Object):int {
+//	 			return StringUtils.stricmp(o1.deathSortKey, o2.deathSortKey);
+//	 		}
+//	 		private function sortMarriageDate(o1:Object, o2:Object):int {
+//	 			return StringUtils.stricmp(o1.marriageSortKey, o2.marriageSortKey);
+//	 		}
+	 		private function sortName(o1:Object, o2:Object):int {
+	 			return StringUtils.strcmp(o1.nameSortKey, o2.nameSortKey);
+	 		}
+	 		private function sortHusbandName(o1:Object, o2:Object):int {
+	 			return StringUtils.strcmp(o1.husbandSortKey, o2.husbandSortKey);
+	 		}
+//	 		private function sortWifeName(o1:Object, o2:Object):int {
+//	 			return StringUtils.stricmp(o1.wifeSortKey, o2.wifeSortKey);
+//	 		}
+		]]>
+	</mx:Script>
+
+	<mx:Array id="personColumns">
+		<mx:DataGridColumn dataField="title" headerText="Title" sortCompareFunction="sortName"/>
+		<mx:DataGridColumn dataField="surname" headerText="Surname" sortable="false"/>
+		<mx:DataGridColumn dataField="given" headerText="Given" sortable="false"/>
+		<mx:DataGridColumn dataField="birth" headerText="Birth" sortable="false"/>
+		<mx:DataGridColumn dataField="death" headerText="Death" sortable="false"/>
+	</mx:Array>
+	<mx:Array id="familyColumns">
+		<mx:DataGridColumn dataField="title" headerText="Title" sortCompareFunction="sortHusbandName"/>
+		<mx:DataGridColumn dataField="husbandName" headerText="Husband" sortable="false"/>
+		<mx:DataGridColumn dataField="wifeName" headerText="Wife" sortable="false"/>
+		<mx:DataGridColumn dataField="marriage" headerText="Marriage" sortable="false"/>
+	</mx:Array>
+	<mx:Array id="allColumns">
+		<mx:DataGridColumn dataField="nsTitle" headerText="Title" showDataTips="true" dataTipField="tip"/>
+	</mx:Array>
+	<mx:Array id="otherColumns">
+		<mx:DataGridColumn dataField="title" headerText="Title"/>
+	</mx:Array>
+
+	<mx:Grid>
+		<mx:GridRow width="100%">
+			<mx:GridItem width="100%">
+				<mx:Label width="100%" id="namespaceLabel" color="0x000000" text="Namespace:" textAlign="right"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%">
+				<mx:ComboBox id="namespaceComboBox" rowCount="8" dataProvider="{Model.instance.indexNamespaces}" 
+					change="selectNamespace(event)"/>
+			</mx:GridItem>
+		</mx:GridRow>
+		<mx:GridRow width="100%">
+			<mx:GridItem width="100%">
+				<mx:Label width="100%" id="searchLabel" color="0x000000" text="Filter:" textAlign="right"/>
+			</mx:GridItem>
+			<mx:GridItem width="100%">
+				<mx:TextInput id="findInput" enter="find(event)"/>
+				<mx:Button id="findButton" label="Go" click="find(event)"/>
+			</mx:GridItem>
+		</mx:GridRow>
+	</mx:Grid>
+	<mx:DataGrid id="dg" width="100%" height="100%" itemClick="itemClick(event)"/>
+</mx:VBox>

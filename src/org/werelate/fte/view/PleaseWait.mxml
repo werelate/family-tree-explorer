@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="150" height="120"
+	title="Loading" showCloseButton="true" borderAlpha="1.0">
+	<mx:Script>
+		<![CDATA[
+			public function setProgress(current:int, total:int):void {
+				lbl.visible = false;
+				bar.visible = true;
+				bar.setProgress(current, total);
+			}
+		]]>
+	</mx:Script>
+	<mx:Label id="lbl" text="Please wait..." x="20" y="10" fontSize="14"/>
+	<mx:ProgressBar id="bar" mode="manual" width="100%" y="10" visible="false"/>
+	<mx:Button label="Cancel" click="dispatchEvent(new Event('close'))" enabled="true" x="33" y="48"/>
+</mx:TitleWindow>

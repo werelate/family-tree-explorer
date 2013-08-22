@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="200" height="132"
+	title="Welcome!" showCloseButton="true" borderAlpha="1.0">
+	<mx:Button x="26" y="18" label="Create a new Tree" click="dispatchEvent(new Event('create'))"/>
+	<mx:Button x="15" y="54" label="Open an existing Tree" click="dispatchEvent(new Event('open'))"/>
+</mx:TitleWindow>

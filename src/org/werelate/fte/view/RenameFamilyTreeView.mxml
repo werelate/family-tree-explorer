@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="254" height="110" title="Rename Tree" 
+	showCloseButton="true" creationComplete="fileName.setFocus()" defaultButton="{rename}" borderAlpha="1.0">
+	<mx:Label x="10" y="10" text="New Tree Name"/>
+	<mx:TextInput x="109" y="8" width="115" id="fileName"/>
+	<mx:Button id="rename" x="80" y="38" label="Rename" click="dispatchEvent(new RenameEvent(fileName.text))"/>
+	<mx:Button x="161" y="38" label="Cancel" click="dispatchEvent(new Event('close'))"/>
+</mx:TitleWindow>

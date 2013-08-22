@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="262" height="110" title="Import GEDCOM?" 
+	showCloseButton="true" defaultButton="{no}" borderAlpha="1.0">
+	<mx:Text x="10" y="10" text="Do you have a GEDCOM file to import?"/>
+	<mx:Button id="yes" x="65" y="36" label="Yes" click="dispatchEvent(new Event('yes'))"/>
+	<mx:Button id="no" x="120" y="36" label="No" click="dispatchEvent(new Event('no'))"/>
+</mx:TitleWindow>

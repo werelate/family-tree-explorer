@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:view="org.werelate.fte.view.*"
+	xmlns:model="org.werelate.fte.model.*"
+	xmlns:service="org.werelate.fte.service.*"
+	xmlns:command="org.werelate.fte.command.*"
+	xmlns:xpanel="com.theriabook.utils.*"
+	layout="vertical"
+   width="100%" height="100%" 
+ 	paddingBottom="0" paddingLeft="0" paddingRight="0" paddingTop="0"
+ 	backgroundColor="0xbfcfff"
+ 	creationComplete="init()" verticalGap="0">
+
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.events.IndexChangedEvent;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;
+			import org.werelate.fte.model.Page;
+			import mx.managers.HistoryManager;
+			import mx.logging.ILogger;
+			import mx.logging.Log;
+			import mx.logging.LogEventLevel;
+			import mx.controls.Menu;
+			import mx.collections.XMLListCollection;
+			import mx.managers.ToolTipManager;
+			import flash.ui.ContextMenu;
+			import flash.ui.ContextMenuItem;
+			import com.theriabook.utils.Logger;
+			
+			import org.werelate.fte.command.Controller;
+			import org.werelate.fte.service.WRServices;
+			import org.werelate.fte.model.Model;
+						
+			private static const logger:ILogger = Log.getLogger("fte");
+			            
+			private function init():void {
+            ToolTipManager.enabled = true;
+				if (ExternalInterface.available) {
+				   try {
+				       ExternalInterface.addCallback("contentLoaded2", contentLoaded2);
+				       ExternalInterface.addCallback("getTreeName", getTreeName);
+//				       ExternalInterface.addCallback("savingEdit", savingEdit);
+//				       ExternalInterface.addCallback("uploadingFile", uploadingFile);
+				   } catch (error:SecurityError) {
+				       throw new Error("A SecurityError occurred: " + error.message + "\n");
+				   } catch (error:Error) {
+				       throw new Error("An Error occurred: " + error.message + "\n");
+				   }
+				}
+				else {
+					throw new Error("ExternalInterface not available\n");
+				}
+
+        		var cm:ContextMenu = new ContextMenu();
+        		cm.hideBuiltInItems();
+        		MovieClip(systemManager).contextMenu = cm;
+        		this.contextMenu.hideBuiltInItems();
+        		this.contextMenu.addEventListener(ContextMenuEvent.MENU_SELECT, Controller.instance.contextMenuHandler);
+
+				Controller.instance.init();
+			}
+			
+			private function contentLoaded2(title:String, url:String, revid:int, treeNames:String, userName:String):void {
+				Controller.instance.contentLoaded(title, url, revid, treeNames, userName);
+			}
+			
+			private function getTreeName():String {
+				var treeName:String = (Model.instance.treeName == null ? '' : Model.instance.treeName);
+//				logger.warn("return tree name: " + treeName);
+				return treeName;
+			}
+			
+//			private function savingEdit():void {
+//				Controller.instance.savingEdit();
+//			}
+			
+//			private function uploadingFile():void {
+//				Controller.instance.uploadingFile();
+//			}
+			
+			private function tabChanged(event:IndexChangedEvent):void {
+				Model.instance.selectedTab = event.newIndex;
+			}
+		]]>
+	</mx:Script>
+
+<!--
+	<xpanel:XPanelTarget fieldSeparator="->" includeCategory="true" level="{LogEventLevel.DEBUG}">
+		<xpanel:filters><mx:String>*</mx:String></xpanel:filters>
+	</xpanel:XPanelTarget>
+-->
+	<command:Controller/>
+	<model:Model/>
+	<service:WRServices/>
+	   
+	<mx:VBox width="100%" height="100%" verticalGap="0" backgroundColor="0xbfcfff">
+		<mx:MenuBar id="mainMenu" labelField="@label" itemClick="Controller.instance.mainMenuHandler(event)" dataProvider="{Model.instance.mainMenu.mainMenuCollection}" width="100%" fontSize="12"/>
+		<mx:VDividedBox width="100%" height="100%">
+			<mx:VBox width="100%" height="125" verticalGap="1">
+				<mx:Spacer height="5"/>
+				<mx:HBox horizontalGap="0">
+					<mx:Button id="makePrimaryButton" icon="@Embed('../images/makeprimary.png')" 
+						disabledIcon="@Embed('../images/makeprimary_disabled.png')" 
+						toolTip="Make this person the root of the tree" cornerRadius="2" width="24"
+						click="Controller.instance.makePrimary()" enabled="{Model.instance.mainMenu.makePrimaryEnabled}"/>
+					<mx:Button id="addButton" icon="@Embed('../images/addpage.png')" 
+						disabledIcon="@Embed('../images/addpage_disabled.png')" 
+						toolTip="Add this page to tree" cornerRadius="2" color="0xbfcfff" width="24"
+						click="Controller.instance.addPage()" enabled="{Model.instance.mainMenu.addPageEnabled}"/>
+<!--
+					<mx:Button id="removeButton" icon="@Embed('../images/removepage.png')" 
+						disabledIcon="@Embed('../images/removepage_disabled.png')" 
+						toolTip="Remove this page from tree" cornerRadius="2" width="24"
+						click="Controller.instance.removePage()" enabled="{Model.instance.mainMenu.removePageEnabled}"/>
+					<mx:Button id="viewChangesButton" icon="@Embed('../images/viewchanges.png')" 
+						disabledIcon="@Embed('../images/viewchanges_disabled.png')" 
+						toolTip="View changes to current page" cornerRadius="2" width="24"
+						click="Controller.instance.viewChanges()" enabled="{Model.instance.mainMenu.viewChangesEnabled}"/>
+					<mx:Button id="acceptButton" icon="@Embed('../images/acceptchanges.png')" 
+						disabledIcon="@Embed('../images/acceptchanges_disabled.png')" 
+						toolTip="Acknowledge changes to current page" cornerRadius="2" width="24"
+						click="Controller.instance.acceptChanges()" enabled="{Model.instance.mainMenu.acceptChangesEnabled}"/>
+-->						
+				</mx:HBox>
+				<mx:Canvas id="summaryCanvas" height="100%" width="100%" backgroundColor="0xffffff" >
+					<mx:Text fontSize="12" htmlText="{Model.instance.selectedPage.summary}"/> 
+				</mx:Canvas>
+			</mx:VBox>
+			<mx:VBox width="100%">
+				<mx:TabNavigator width="100%" height="100%" backgroundColor="0x99a6cc" historyManagementEnabled="false"
+					paddingTop="5" paddingLeft="2" paddingRight="2" paddingBottom="3"
+					selectedIndex="{Model.instance.selectedTab}" change="tabChanged(event)">
+					<mx:Canvas icon="@Embed('../images/hourglass.png')" toolTip="Pedigree and Descendants" width="100%" height="100%"
+					enabled="{Model.instance.mainMenu.viewsEnabled}">
+						<view:HourglassView id="hourglassView" width="100%" height="100%" 
+							ancGenerations="{Model.instance.hgAncGenerations}" descGenerations="{Model.instance.hgDescGenerations}" 
+							treeDirection="{Model.instance.hgTreeDirection}" buttonFontSize="{Model.instance.hgFontSize}" 
+							ancLeaves="{Model.instance.pages.hgAncLeaves}" descLeaves="{Model.instance.pages.hgDescLeaves}"
+							primaryPage="{Model.instance.primaryPage}"
+							pages="{Model.instance.pages.hgPages}" selectedPage="{Model.instance.selectedPage}"/>
+					</mx:Canvas>
+					<mx:Canvas icon="@Embed('../images/ancestors.png')" toolTip="Pedigree" width="100%" height="100%"
+					enabled="{Model.instance.mainMenu.viewsEnabled}">
+						<view:FamilyTree id="pedigreeView" width="100%" height="100%" items="{Model.instance.pages.pedigreeItems}"
+							selectedPage="{Model.instance.selectedPage}" isPedigree="true"/>
+					</mx:Canvas>
+					<mx:Canvas icon="@Embed('../images/descendants.png')" toolTip="Descendants" width="100%" height="100%"
+						enabled="{Model.instance.mainMenu.viewsEnabled}">
+						<view:FamilyTree id="descendencyView" width="100%" height="100%" items="{Model.instance.pages.descendencyItems}"
+							selectedPage="{Model.instance.selectedPage}" isPedigree="false"/>
+					</mx:Canvas>
+					<mx:Canvas icon="@Embed('../images/index.png')" toolTip="Index" width="100%" height="100%"
+						enabled="{Model.instance.mainMenu.viewsEnabled}">
+						<view:Index id="indexView" width="100%" height="100%" pages="{Model.instance.pages.indexPages}" 
+							selectedNamespace="{Model.instance.selectedNamespace}" findText="{Model.instance.findText}"
+							selectedPage="{Model.instance.selectedPage}"/>
+					</mx:Canvas>
+<!--
+					<mx:Canvas icon="@Embed('../images/changedpages.png')" toolTip="Changed pages" width="100%" height="100%"
+						enabled="{Model.instance.mainMenu.viewsEnabled}">
+						<view:Changes id="changesView" width="100%" height="100%" pages="{Model.instance.pages.changedPages}"
+							allowMultipleSelection="true" selectedPage="{Model.instance.selectedPage}"/>
+					</mx:Canvas>
+-->					
+				</mx:TabNavigator>
+			</mx:VBox>
+		</mx:VDividedBox>
+		<mx:Label id="statusLabel" textAlign="left" text="{Model.instance.status.message}"/>
+	</mx:VBox>
+</mx:Application>

@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="320" height="444" title="Start your tree"
+	showCloseButton="true" creationComplete="init()" defaultButton="{next}" borderAlpha="1.0">
+<mx:Script>
+	<![CDATA[
+		import mx.logging.ILogger;
+		import mx.logging.Log;
+		import org.werelate.fte.model.BasicPersonInfo;
+		import mx.events.IndexChangedEvent;
+		
+		private static const logger:ILogger = Log.getLogger("AddAncestorsView");
+	
+		private var tabIx:int;
+		
+		private function init():void {
+			prev.setVisible(false);
+			fl1.setFocus();
+			tabIx = 0;
+			instructions.text = 
+				"Enter the names of your parents, grandparents, and/or great-grandparents. "+
+				"Be sure to check the box for people who are still living. "+
+				"It is ok to leave some people blank; you can always add them later.";
+		}
+		
+		private function tabChanged(event:IndexChangedEvent):void {
+			tabIx = event.newIndex;
+			if (tabIx == 0) {
+				prev.visible = false;
+				next.label = "Next";
+				fl1.setFocus();
+			}
+			else {
+				prev.visible = true;
+				next.label = "Finish";
+				ml1.setFocus();
+			}
+		}
+		
+		private function handleChange(event:Event):void {
+			var given:TextInput = null;
+			switch (event.target.id) {
+				case "fl1":
+					given=fg1; break;
+				case "fl2":
+					given=fg2; break;
+				case "fl3":
+					given=fg3; break;
+				case "fl4":
+					given=fg4; break;
+				case "fl5":
+					given=fg5; break;
+				case "fl6":
+					given=fg6; break;
+				case "fl7":
+					given=fg7; break;
+				case "ml1":
+					given=mg1; break;
+				case "ml2":
+					given=mg2; break;
+				case "ml3":
+					given=mg3; break;
+				case "ml4":
+					given=mg4; break;
+				case "ml5":
+					given=mg5; break;
+				case "ml6":
+					given=mg6; break;
+				case "ml7":
+					given=mg7; break;
+			}
+			if (event.target.selected) {
+				given.text="Living";
+				given.editable = false;
+				given.setStyle("backgroundColor", "#e0e0e0");
+			}
+			else {
+				given.text="";
+				given.editable = true;
+				given.setStyle("backgroundColor", "#FFFFFF");
+			}
+		}
+		
+		private function clickPrev(event:Event):void {
+			tabs.selectedIndex = 0;
+		}
+
+		private function clickNext(event:Event):void {
+			if (tabIx == 1) {
+				var people:Array = new Array();
+				people[0] = null;
+				people[1] = new BasicPersonInfo(fl1.selected, fg1.text, fs1.text);
+				people[2] = new BasicPersonInfo(ml1.selected, mg1.text, ms1.text);
+				people[3] = new BasicPersonInfo(fl2.selected, fg2.text, fs2.text);
+				people[4] = new BasicPersonInfo(fl5.selected, fg5.text, fs5.text);
+				people[5] = new BasicPersonInfo(ml2.selected, mg2.text, ms2.text);
+				people[6] = new BasicPersonInfo(ml5.selected, mg5.text, ms5.text);
+				people[7] = new BasicPersonInfo(fl3.selected, fg3.text, fs3.text);
+				people[8] = new BasicPersonInfo(fl4.selected, fg4.text, fs4.text);
+				people[9] = new BasicPersonInfo(fl6.selected, fg6.text, fs6.text);
+				people[10]= new BasicPersonInfo(fl7.selected, fg7.text, fs7.text);
+				people[11]= new BasicPersonInfo(ml3.selected, mg3.text, ms3.text);
+				people[12]= new BasicPersonInfo(ml4.selected, mg4.text, ms4.text);
+				people[13]= new BasicPersonInfo(ml6.selected, mg6.text, ms6.text);
+				people[14]= new BasicPersonInfo(ml7.selected, mg7.text, ms7.text);
+				dispatchEvent(new AddAncestorsEvent(people));
+			}
+			else {
+				tabs.selectedIndex = 1;
+			}
+		}
+
+	]]>
+</mx:Script>
+	<mx:Text x="10" y="10" width="280" height="94" id="instructions" fontSize="11"/>
+	<mx:TabNavigator id="tabs" x="0" y="102" width="100%" height="262" change="tabChanged(event)" paddingBottom="0" paddingTop="0">
+		<mx:Canvas label="Father's Family" width="100%" height="100%">
+			<mx:CheckBox x="105" y="32" width="14" id="fl1" change="handleChange(event)"/>
+			<mx:TextInput x="127" y="30" width="75" id="fg1"/>
+			<mx:TextInput x="210" y="30" width="80" id="fs1"/>
+			<mx:CheckBox x="105" y="62" width="14" id="fl2" change="handleChange(event)"/>
+			<mx:TextInput x="127" y="60" width="75" id="fg2"/>
+			<mx:TextInput x="210" y="60" width="80" id="fs2"/>
+			<mx:CheckBox x="105" y="92" width="14" id="fl3" change="handleChange(event)"/>
+			<mx:TextInput x="127" y="90" width="75" id="fg3"/>
+			<mx:TextInput x="210" y="90" width="80" id="fs3"/>
+			<mx:CheckBox x="105" y="122" width="14" id="fl4" change="handleChange(event)"/>
+			<mx:TextInput x="127" y="120" width="75" id="fg4"/>
+			<mx:TextInput x="210" y="120" width="80" id="fs4"/>
+			<mx:CheckBox x="105" y="152" width="14" id="fl5" change="handleChange(event)"/>
+			<mx:TextInput x="127" y="150" width="75" id="fg5"/>
+			<mx:TextInput x="210" y="150" width="80" id="fs5"/>
+			<mx:CheckBox x="105" y="182" width="14" id="fl6" change="handleChange(event)"/>
+			<mx:TextInput x="127" y="180" width="75" id="fg6"/>
+			<mx:TextInput x="210" y="180" width="80" id="fs6"/>
+			<mx:CheckBox x="105" y="212" width="14" id="fl7" change="handleChange(event)"/>
+			<mx:TextInput x="127" y="210" width="75" id="fg7"/>
+			<mx:TextInput x="210" y="210" width="80" id="fs7"/>
+			<mx:Label x="127" y="8" text="Given" width="75" fontSize="11" textAlign="center" fontWeight="bold"/>
+			<mx:Label x="88" y="8" text="Living?" width="52" fontSize="11" fontWeight="bold"/>
+			<mx:Label x="210" y="8" text="Surname" width="80" fontSize="11" textAlign="center" fontWeight="bold"/>
+			<mx:Label x="10" y="29" text="Father" width="84" fontSize="13" fontWeight="bold"/>
+			<mx:Label x="17" y="61" text="Grandfather" width="84" fontSize="11"/>
+			<mx:Label x="17" y="151" text="Grandmother" width="84" fontSize="11"/>
+			<mx:Label x="24" y="92" text="G.Grandfather" width="84" fontSize="9"/>
+			<mx:Label x="24" y="182" text="G.Grandfather" width="84" fontSize="9"/>
+			<mx:Label x="24" y="122" text="G.Grandmother" width="85" fontSize="9"/>
+			<mx:Label x="24" y="212" text="G.Grandmother" width="84" fontSize="9"/>
+			<mx:VRule x="13" y="46" width="2" height="114" strokeColor="#808080"/>
+			<mx:VRule x="21" y="75" width="2" height="56" strokeColor="#808080"/>
+			<mx:VRule x="21" y="165" width="2" height="56" strokeColor="#808080"/>
+			<mx:HRule x="13" y="68" width="4" height="4" strokeColor="#808080"/>
+			<mx:HRule x="13" y="158" width="4" height="4" strokeColor="#808080"/>
+			<mx:HRule x="21" y="99" width="3" height="4" strokeColor="#808080"/>
+			<mx:HRule x="21" y="189" width="3" height="4" strokeColor="#808080"/>
+			<mx:HRule x="21" y="129" width="3" height="4" strokeColor="#808080"/>
+			<mx:HRule x="21" y="219" width="3" height="4" strokeColor="#808080"/>
+		</mx:Canvas>
+		<mx:Canvas label="Mother's Family" width="100%" height="100%">
+			<mx:CheckBox x="105" y="32" width="14" id="ml1" change="handleChange(event)"/>
+			<mx:TextInput x="127" y="30" width="75" id="mg1"/>
+			<mx:TextInput x="210" y="30" width="80" id="ms1"/>
+			<mx:CheckBox x="105" y="62" width="14" id="ml2" change="handleChange(event)"/>
+			<mx:TextInput x="127" y="60" width="75" id="mg2"/>
+			<mx:TextInput x="210" y="60" width="80" id="ms2"/>
+			<mx:CheckBox x="105" y="92" width="14" id="ml3" change="handleChange(event)"/>
+			<mx:TextInput x="127" y="90" width="75" id="mg3"/>
+			<mx:TextInput x="210" y="90" width="80" id="ms3"/>
+			<mx:CheckBox x="105" y="122" width="14" id="ml4" change="handleChange(event)"/>
+			<mx:TextInput x="127" y="120" width="75" id="mg4"/>
+			<mx:TextInput x="210" y="120" width="80" id="ms4"/>
+			<mx:CheckBox x="105" y="152" width="14" id="ml5" change="handleChange(event)"/>
+			<mx:TextInput x="127" y="150" width="75" id="mg5"/>
+			<mx:TextInput x="210" y="150" width="80" id="ms5"/>
+			<mx:CheckBox x="105" y="182" width="14" id="ml6" change="handleChange(event)"/>
+			<mx:TextInput x="127" y="180" width="75" id="mg6"/>
+			<mx:TextInput x="210" y="180" width="80" id="ms6"/>
+			<mx:CheckBox x="105" y="212" width="14" id="ml7" change="handleChange(event)"/>
+			<mx:TextInput x="127" y="210" width="75" id="mg7"/>
+			<mx:TextInput x="210" y="210" width="80" id="ms7"/>
+			<mx:Label x="127" y="8" text="Given" width="75" fontSize="11" textAlign="center" fontWeight="bold"/>
+			<mx:Label x="88" y="8" text="Living?" width="52" fontSize="11" fontWeight="bold"/>
+			<mx:Label x="210" y="8" text="Surname" width="80" fontSize="11" textAlign="center" fontWeight="bold"/>
+			<mx:Label x="10" y="29" text="Mother" width="84" fontSize="13" fontWeight="bold"/>
+			<mx:Label x="17" y="61" text="Grandfather" width="84" fontSize="11"/>
+			<mx:Label x="17" y="151" text="Grandmother" width="84" fontSize="11"/>
+			<mx:Label x="24" y="92" text="G.Grandfather" width="84" fontSize="9"/>
+			<mx:Label x="24" y="122" text="G.Grandmother" width="85" fontSize="9"/>
+			<mx:Label x="24" y="182" text="G.Grandfather" width="84" fontSize="9"/>
+			<mx:Label x="24" y="212" text="G.Grandmother" width="84" fontSize="9"/>
+			<mx:VRule x="13" y="46" width="2" height="114" strokeColor="#808080"/>
+			<mx:VRule x="21" y="75" width="2" height="56" strokeColor="#808080"/>
+			<mx:VRule x="21" y="165" width="2" height="56" strokeColor="#808080"/>
+			<mx:HRule x="13" y="68" width="4" height="4" strokeColor="#808080"/>
+			<mx:HRule x="13" y="158" width="4" height="4" strokeColor="#808080"/>
+			<mx:HRule x="21" y="99" width="3" height="4" strokeColor="#808080"/>
+			<mx:HRule x="21" y="189" width="3" height="4" strokeColor="#808080"/>
+			<mx:HRule x="21" y="129" width="3" height="4" strokeColor="#808080"/>
+			<mx:HRule x="21" y="219" width="3" height="4" strokeColor="#808080"/>
+		</mx:Canvas>
+	</mx:TabNavigator>
+	<mx:Button x="74" y="372" label="Previous" id="prev" click="clickPrev(event)"/>
+	<mx:Button x="158" y="372" label="Next" width="59" id="next" click="clickNext(event)"/>
+	<mx:Button x="225" y="372" label="Cancel" id="cancel" click="dispatchEvent(new Event('close'))"/>
+</mx:TitleWindow>

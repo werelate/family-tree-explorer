@@ -1,0 +1,527 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" creationComplete="init()">
+	<mx:Script>
+		<![CDATA[
+			import org.werelate.fte.util.Utils;
+			import mx.controls.Button;
+			import mx.effects.Fade;
+			import mx.effects.Parallel;
+			import mx.effects.AnimateProperty;
+			import mx.effects.Resize;
+			import mx.events.EffectEvent;
+			import mx.effects.Move;
+			import mx.effects.Effect;
+			import mx.events.ResizeEvent;
+			import mx.events.SliderEvent;
+			import org.werelate.fte.model.Pages;
+			import mx.logging.ILogger;
+			import mx.logging.Log;
+			import mx.collections.ArrayCollection;
+			import mx.events.ItemClickEvent;
+
+			import org.werelate.fte.command.Controller;
+			import org.werelate.fte.model.Model;
+			import org.werelate.fte.model.Page;
+			import org.werelate.fte.model.FamilyPage;
+			import org.werelate.fte.model.PersonPage;
+						
+			private static const logger:ILogger = Log.getLogger("HourglassView");
+			private static const MOVE_DURATION:int = 1600;
+			private static const SHOW_HIDE_DURATION:int = 400;
+			private static const FONT_DELTA:Number = 0.75;
+
+			public var ancLeaves:int;
+			public var descLeaves:int;
+			[Bindable]
+			private var _leftGenerations:int;
+			[Bindable]
+			private var _rightGenerations:int;
+			[Bindable]
+			private var _buttonFontSize:int;
+			private var _primaryPage:Page;
+			private var _selectedPage:Page;
+			private var _ancGenerations:int;
+			private var _descGenerations:int;
+			private var _treeDirection:int;
+			private var _heights:Array;
+
+			public function init():void {
+				canvas.addEventListener(ResizeEvent.RESIZE, resize);
+			}					
+			
+	 		public function set primaryPage(page:Page):void {
+//				logger.debug("set primaryPage " + (page == null ? "null" : page.title));
+				_primaryPage = page;
+				setPrimaryPage();
+	 		}
+	 		
+			private function setPrimaryPage():void {
+				for each (var btn:HourglassButton in canvas.getChildren()) {
+					btn.isPrimary = (btn.page == _primaryPage);
+				}
+			}
+			
+			public function get selectedPage():Page {
+				return _selectedPage;
+			}
+			
+			public function set selectedPage(page:Page):void {
+//				logger.debug("set selectedPage " + (page == null ? "null" : page.title));
+				_selectedPage = page;
+				setSelectedPage();
+			}
+			
+			private function setSelectedPage():void {
+				for each (var btn:HourglassButton in canvas.getChildren()) {
+					btn.isSelected = (btn.page == _selectedPage);
+				}
+			}
+			
+	 		public function set pages(pages:Array):void {
+//	 			logger.debug("set pages");
+	 			generateButtons();
+	 		}
+	 		
+	 		private function updateGenerations():void {
+	 			if (_treeDirection <= 0) {
+		 			_leftGenerations = _ancGenerations;
+		 			_rightGenerations = _descGenerations;
+		 		}
+		 		else {
+		 			_leftGenerations = _descGenerations;
+		 			_rightGenerations = _ancGenerations;
+		 		}
+	 		}
+	 		
+	 		public function set ancGenerations(ancGenerations:int):void {
+	 			_ancGenerations = ancGenerations;
+	 			updateGenerations();
+	 			// expect a pages changed event to cause buttons to be regenerated
+	 		}
+	 		
+	 		public function set descGenerations(descGenerations:int):void {
+	 			_descGenerations = descGenerations;
+	 			updateGenerations();
+	 			// expect a pages changed event to cause buttons to be regenerated
+	 		}
+	 		
+	 		public function set treeDirection(treeDirection:int):void {
+	 			_treeDirection = treeDirection;
+	 			switch (_treeDirection) {
+	 				case -1:
+	 					left.selected = true;
+	 					break;
+	 				case 0:
+	 					up.selected = true;
+	 					break;
+	 				case -1:
+	 					right.selected = true;
+	 					break;
+	 			}
+	 			updateGenerations();
+	 			generateButtons();
+	 		}
+	 		
+	 		public function set buttonFontSize(buttonFontSize:int):void {
+	 			_buttonFontSize = buttonFontSize;
+	 			updateButtons();
+	 		}
+	 		
+			private function leftSliderChange(event:SliderEvent):void {
+				if (_treeDirection <= 0) {
+					Model.instance.hgAncGenerations = event.value;
+				}
+				else {
+					Model.instance.hgDescGenerations = event.value;
+				}
+			}
+
+			private function rightSliderChange(event:SliderEvent):void {
+				if (_treeDirection <= 0) {
+					Model.instance.hgDescGenerations = event.value;
+				}
+				else {
+					Model.instance.hgAncGenerations = event.value;
+				}
+			}
+			
+			private function directionClick(event:ItemClickEvent):void {
+				Model.instance.hgTreeDirection = event.currentTarget.selectedValue;
+			}
+			
+			private function fontSizeChange(event:Event):void {
+				Model.instance.hgFontSize = fontSize.value;
+			}
+			
+			private function resize(event:Event):void {
+				updateButtons();
+			}
+			
+			private function get totalGenerations():int {
+				return realAncGenerations + realDescGenerations + 1;
+			}
+			
+			private function get realAncGenerations():int {
+				return _ancGenerations * 2 -
+						(Model.instance.selectedPage.ns == Model.FAMILY_NS && _ancGenerations > 0 ? 1 : 0);
+			}
+			
+			private function get realDescGenerations():int {
+				return _descGenerations * 2 -
+						(Model.instance.selectedPage.ns == Model.FAMILY_NS && _descGenerations > 0 ? 1 : 0);
+			}
+			
+			private function nsIndent(page:Page, generation:int):int {
+				if (page.ns == Model.PERSON_NS) {
+					return 0;
+				}
+				return (20 - generation * 2 > 0 ? 20 - generation * 2 : 0);
+			}
+			
+			private function nsRadius(page:Page):int {
+				return (page.ns == Model.PERSON_NS ? 2 : 20);
+			}
+			
+			private function calcY(realGeneration:int):Number {
+				var y:Number = 0;
+				for (var i:int = 0; i < realGeneration; i++) {
+					y += _heights[i];
+				}
+				return y;
+//				return realGenerations / totalGenerations;
+				
+			}
+			
+			private function calcHeight(realGeneration:int):Number {
+				return _heights[realGeneration];
+			}
+			
+			private function calcHeights():void {
+				_heights = new Array();
+				var sum:int = Utils.summation(realDescGenerations) + Utils.summation(realAncGenerations);
+				var g:int = _treeDirection == 1 ? -realDescGenerations : -realAncGenerations;
+				for (var i:int = 0; i < totalGenerations; i++) {
+					_heights[i] = (1.0 / totalGenerations) + 
+										(1.0/totalGenerations - Math.abs(g)*1.0/sum) * 0.35;
+					g++;
+				}
+			}
+			
+			// in this function, generation == -n .. n, where n counts people + family levels
+			private function createButton(page:Page, generation:int, start:int, end:int):HourglassButton {
+				var btn:HourglassButton;
+				var g:int;
+				
+				if (generation == 0) {
+					if (_treeDirection == 0) {
+						btn = new HourglassButton(page, 
+										0,
+										calcY(realAncGenerations),
+										1.0,
+										calcHeight(realAncGenerations),
+										0, nsIndent(page,0), nsIndent(page,0), nsRadius(page));
+					}
+					else {
+						g = _treeDirection == -1 ? realAncGenerations : realDescGenerations;
+						btn = new HourglassButton(page, 
+										calcY(g),
+										0, 
+										calcHeight(g),
+										1.0,
+										0, nsIndent(page,0), nsIndent(page,0), nsRadius(page));
+					}
+				}
+				else if (generation < 0) {
+					if (_treeDirection == 0) {
+						btn = new HourglassButton(page,
+										start / ancLeaves,
+										calcY(realAncGenerations + generation),
+										(end - start) / ancLeaves,
+										calcHeight(realAncGenerations + generation),
+										generation * FONT_DELTA, nsIndent(page,-generation), nsIndent(page,-generation), nsRadius(page));
+										
+					}
+					else {
+						g = _treeDirection == -1 ? realAncGenerations + generation : realDescGenerations - generation;
+						btn = new HourglassButton(page, 
+										calcY(g),
+										start / ancLeaves, 
+										calcHeight(g),
+										(end - start) / ancLeaves,
+										generation * FONT_DELTA, nsIndent(page,-generation), nsIndent(page,-generation), nsRadius(page));
+					}
+				}
+				else {
+					if (_treeDirection == 0) {
+						btn = new HourglassButton(page,
+										start / descLeaves,
+										calcY(realAncGenerations + generation),
+										(end - start) / descLeaves,
+										calcHeight(realAncGenerations + generation),
+										-generation * FONT_DELTA, nsIndent(page,generation), nsIndent(page,generation), nsRadius(page));
+										
+					}
+					else {
+						g = _treeDirection == -1 ? realAncGenerations + generation : realDescGenerations - generation;
+						btn = new HourglassButton(page, 
+										calcY(g),
+										start / descLeaves,
+										calcHeight(g),
+										(end - start) / descLeaves,
+										-generation * FONT_DELTA, nsIndent(page,generation), nsIndent(page,generation), nsRadius(page));
+					}
+				}
+				
+				btn.addEventListener(MouseEvent.CLICK, click);
+				return btn;
+			}
+			
+			private function generateParentButtons(buttons:Array, familyPage:FamilyPage, generation:int, start:int):int {
+				var end:int = start + 1;
+				if (generation > _ancGenerations * 2) {
+					return end;
+				}
+				if (familyPage.isInTree) {
+					for each (var spouseTitle:String in familyPage.husbands) {
+						var spousePage:PersonPage = PersonPage(Model.instance.pages.getPage(Model.PERSON_NS, spouseTitle));
+						var spouseStart:int = start;
+						start = generateParentFamilyButtons(buttons, spousePage, generation+1, start);
+						buttons.push(createButton(spousePage, -generation, spouseStart, start));
+					}
+					for each (spouseTitle in familyPage.wives) {
+						spousePage = PersonPage(Model.instance.pages.getPage(Model.PERSON_NS, spouseTitle));
+						spouseStart = start;
+						start = generateParentFamilyButtons(buttons, spousePage, generation+1, start);
+						buttons.push(createButton(spousePage, -generation, spouseStart, start));
+					}
+				}
+				return start > end ? start : end;
+			}
+			
+			private function generateParentFamilyButtons(buttons:Array, personPage:PersonPage, generation:int, start:int):int {
+				var end:int = start + 1;
+				if (generation >= _ancGenerations * 2) {
+					return end;
+				}
+				if (personPage.isInTree) {
+					// add pages for parent families
+					for each (var familyTitle:String in personPage.childOfFamilies) {
+						var familyPage:FamilyPage = FamilyPage(Model.instance.pages.getPage(Model.FAMILY_NS, familyTitle));
+						var familyStart:int = start;
+						start = generateParentButtons(buttons, familyPage, generation+1, start);
+						buttons.push(createButton(familyPage, -generation, familyStart, start));
+					}
+				}
+				return start > end ? start : end;
+			}
+			
+			private function generateChildButtons(buttons:Array, familyPage:FamilyPage, generation:int, start:int):int {
+				var end:int = start + 1;
+				if (generation > _descGenerations * 2) {
+					return end;
+				}
+				if (familyPage.isInTree) {
+					for each (var childTitle:String in familyPage.children) {
+						var childPage:PersonPage = PersonPage(Model.instance.pages.getPage(Model.PERSON_NS, childTitle));
+						var childStart:int = start;
+						start = generateSpouseFamilyButtons(buttons, childPage, generation+1, start);
+						buttons.push(createButton(childPage, generation, childStart, start));
+					}
+				}
+				return start > end ? start : end;
+			}
+		
+			private function generateSpouseFamilyButtons(buttons:Array, personPage:PersonPage, generation:int, start:int):int {
+				var end:int = start + 1;
+				if (generation >= _descGenerations * 2) {
+					return end;
+				}
+				// add pages for spouse families
+				if (personPage.isInTree) {
+					for each (var familyTitle:String in personPage.spouseOfFamilies) {
+						var familyPage:FamilyPage = FamilyPage(Model.instance.pages.getPage(Model.FAMILY_NS, familyTitle));
+						var familyStart:int = start;
+						start = generateChildButtons(buttons, familyPage, generation+1, start);
+						buttons.push(createButton(familyPage, generation, familyStart, start));
+					}
+				}
+				return start > end ? start : end;
+			}
+			
+			private function findButton(buttons:Array, button:HourglassButton):HourglassButton {
+				for each (var btn:HourglassButton in buttons) {
+					if (btn.page === button.page) {
+						return btn;
+					}
+				}
+				return null;
+			}
+			
+			private function moveButton(oldBtn:HourglassButton, newBtn:HourglassButton):void {
+//logger.warn("moveButton");				
+//				if (oldBtn.width != newBtn.width || oldBtn.height != newBtn.height ||
+//					 oldBtn.x != newBtn.x || oldBtn.y != newBtn.y || oldBtn.fontSizeDelta != newBtn.fontSizeDelta) {
+					oldBtn.endEffectsStarted();
+					oldBtn.alpha = 1.0;
+		      	var r:Resize = new Resize(oldBtn);
+		      	r.duration = MOVE_DURATION;
+//	logger.warn("moveButton title=" + oldBtn.page.title + " width=" + oldBtn.width + " -> " + newBtn.width);	      	
+		      	r.heightFrom = oldBtn.height;
+		      	r.widthFrom = oldBtn.width;
+		      	r.heightTo = newBtn.height;
+		      	r.widthTo = newBtn.width;
+						
+					var m:Move = new Move(oldBtn);
+					m.duration = MOVE_DURATION;
+					m.xFrom = oldBtn.x;
+					m.yFrom = oldBtn.y;
+					m.xTo = newBtn.x;
+					m.yTo = newBtn.y;
+					
+		      	var ap:AnimateProperty = new AnimateProperty(oldBtn);
+		      	ap.duration = MOVE_DURATION;
+		      	ap.property = "fontSizeDelta";
+		      	ap.fromValue = oldBtn.fontSizeDelta;
+		      	ap.toValue = newBtn.fontSizeDelta;
+	
+		      	var p:Parallel = new Parallel();  // NEVER fill this in! 
+		      	p.addChild(r);
+		      	p.addChild(m);
+		      	p.addChild(ap);
+		        	p.play();
+//		      }
+			}
+			
+			private function removeButton(btn:HourglassButton):void {
+//logger.warn("removeButton=" + btn.page.title);
+				btn.endEffectsStarted();
+				for each (var child:HourglassButton in canvas.getChildren()) {
+					if (child === btn) {
+						canvas.removeChild(btn);
+						return;
+					}
+				}
+//logger.warn("removeButton not found in canvas");
+			}
+			
+			private function endHideButton(event:EffectEvent):void {
+				var btn:HourglassButton = HourglassButton(event.effectInstance.target);
+				removeButton(btn);
+			}
+			
+			private function hideButton(btn:HourglassButton):void {
+				btn.endEffectsStarted();
+				var f:Fade = new Fade(btn);
+				f.alphaFrom = 1.0;
+				f.alphaTo = 0.0;
+				f.startDelay = 0;
+				f.duration = SHOW_HIDE_DURATION;
+				f.addEventListener(EffectEvent.EFFECT_END, endHideButton);
+	        	f.play();
+			}
+			
+			private function showButton(btn:HourglassButton):void {
+//logger.warn("showButton title=" + btn.page.title);	      	
+				btn.endEffectsStarted();
+				var f:Fade = new Fade(btn);
+				f.alphaFrom = 0.0;
+				f.alphaTo = 1.0;
+				f.startDelay = MOVE_DURATION - SHOW_HIDE_DURATION;
+				f.duration = SHOW_HIDE_DURATION;
+	        	f.play();
+			}
+		
+			private function generateButtons():void {
+//				logger.warn("generateButtons selected=" + (Model.instance.selectedPage == null ? "null" : "notnull") +
+//									" primary=" + (_primaryPage == null ? "null" : "notnull"));
+				// calc Y positions
+				calcHeights();
+				// generate new buttons
+				var newButtons:Array = new Array();
+				if (Model.instance.selectedPage != null) {
+					var ns:int = Utils.getMainNs(Model.instance.selectedPage.ns);
+					var page:Page = Model.instance.pages.getPage(ns, Model.instance.selectedPage.title);
+					if (page.ns == Model.PERSON_NS || ns == Model.FAMILY_NS) {
+						newButtons = new Array();
+						var btn:HourglassButton = createButton(page, 0, 0, 1);
+						newButtons.push(btn);
+						if (page.ns == Model.PERSON_NS) {
+							generateParentFamilyButtons(newButtons, PersonPage(page), 1, 0);
+							generateSpouseFamilyButtons(newButtons, PersonPage(page), 1, 0);
+						}
+						else {
+							generateParentButtons(newButtons, FamilyPage(page), 1, 0);
+							generateChildButtons(newButtons, FamilyPage(page), 1, 0);
+						}
+					}
+					else { // non-person/family page selected, so just return
+						setSelectedPage();
+						return;
+					}
+				}
+				
+				var oldButtons:Array = canvas.getChildren().slice();
+				for (var i:int = 0; i < oldButtons.length; i++) {
+					btn = HourglassButton(oldButtons[i]);
+					var newButton:HourglassButton = findButton(newButtons, btn);
+					// if button is in new buttons, move it
+					if (newButton != null) {
+						newButton.update(canvas, _buttonFontSize);
+						btn.copySize(newButton);
+						moveButton(btn, newButton);
+					}
+					else { // else remove it
+						hideButton(btn);
+					}
+				}
+				
+				for each (btn in newButtons) {
+					// add new buttons
+					if (findButton(canvas.getChildren(), btn) == null) {
+						btn.alpha = 0.0;
+						canvas.addChild(btn);
+						btn.update(canvas, _buttonFontSize);
+					 	showButton(btn);
+					}
+				}
+				setPrimaryPage();
+				setSelectedPage();
+			}
+			
+			private function updateButtons():void {
+//				logger.info("updateButtons " + canvas.width + ":" + canvas.height);
+				for each (var btn:HourglassButton in canvas.getChildren()) {
+					btn.update(canvas,_buttonFontSize);
+				}
+			}
+			
+			private function click(event:MouseEvent):void {
+				Controller.instance.loadPage(HourglassButton(event.currentTarget).page);
+			}
+		]]>
+	</mx:Script>
+
+	<mx:HBox horizontalAlign="center" verticalAlign="middle" width="100%" horizontalGap="0">
+		<mx:HSlider id="leftSlider" minimum="0" maximum="10" value="{_leftGenerations}" tickColor="black"
+	            snapInterval="1" tickInterval="2" labels="['0','generations','10']" allowTrackClick="true" liveDragging="true"
+	            width="100%" minWidth="50" change="leftSliderChange(event);"/>
+	   <mx:Spacer width="8"/>
+		<mx:RadioButtonGroup id="dir" itemClick="directionClick(event)"/>
+    	<mx:Image source="@Embed(source='../../../../../images/turnleft.png')" width="16"/>
+    	<mx:RadioButton groupName="dir" id="left" value="-1" width="20"/>
+    	<mx:RadioButton groupName="dir" id="up" value="0" width="20" selected="true"/>
+    	<mx:RadioButton groupName="dir" id="right" value="1" width="15"/>
+    	<mx:Image source="@Embed(source='../../../../../images/turnright.png')" width="16"/>
+	   <mx:Spacer width="8"/>
+		<mx:HSlider id="rightSlider" minimum="0" maximum="10" value="{_rightGenerations}" tickColor="black"
+	            snapInterval="1" tickInterval="2" labels="['0','generations','10']" allowTrackClick="true" liveDragging="true"
+	            width="100%" minWidth="50" change="rightSliderChange(event);"/>
+	   <mx:Spacer width="5"/>
+	   <mx:VBox verticalGap="0">
+  		   <mx:Label fontWeight="bold" text="Font"/>
+			<mx:NumericStepper id="fontSize" minimum="6" maximum="20" stepSize="1" width="42" 
+				value="{_buttonFontSize}" change="fontSizeChange(event)"/>
+	   </mx:VBox>
+	</mx:HBox>
+   <mx:Canvas id="canvas" height="100%" width="100%"/>
+</mx:VBox>
