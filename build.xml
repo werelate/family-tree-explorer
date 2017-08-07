@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="family-tree-explorer" default="build">
+  
+  
+  <property file="build.properties"/>
+
+  <dirname property="base.dir" file="${ant.file}"/>
+  <property name="output.dir" value="${base.dir}/out/production/fte"/>
+  <patternset id="compiler.resources">
+    <include name="**/?*.properties"/>
+    <include name="**/?*.xml"/>
+    <include name="**/?*.gif"/>
+    <include name="**/?*.png"/>
+    <include name="**/?*.jpeg"/>
+    <include name="**/?*.jpg"/>
+    <include name="**/?*.php"/>
+    <include name="**/?*.htm"/>
+    <include name="**/?*.html"/>
+    <include name="**/?*.js"/>
+    <include name="**/?*.css"/>
+    <include name="**/?*.swf"/>
+  </patternset>
+
+  <taskdef resource="flexTasks.tasks"
+      classpath="${FLEX_HOME}/ant/lib/flexTasks.jar"/>
+
+  <target name="compile">
+    <mxmlc file="${base.dir}/src/FTE.mxml"
+           output="${output.dir}/FTE.swf"
+           keep-generated-actionscript="true">
+      <load-config filename="${FLEX_HOME}/frameworks/flex-config.xml"/>
+      <define name="CONFIG::test" value="false"/>
+      <define name="CONFIG::release" value="true"/>
+      <keep-as3-metadata name="Autowire"/>
+      <keep-as3-metadata name="Mediate"/>
+      <source-path path-element="${FLEX_HOME}/frameworks"/>
+      <source-path path-element="${base.dir}/images"/>
+    </mxmlc>
+    <copy todir="${output.dir}">
+      <fileset dir="${base.dir}/src">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+      <fileset dir="${base.dir}/html">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+
+  <target name="clean" description="cleanup">
+    <delete dir="${output.dir}"/>
+  </target>
+  
+  <target name="build" depends="clean, compile" description="clean and compile"/>
+</project>

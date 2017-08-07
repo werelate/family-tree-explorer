@@ -216,10 +216,10 @@ package org.werelate.fte.model
 		public function init():void {
 //			logger.info("host="+Application.application.parameters.host);
 			if (Application.application.parameters.host.length > 0) {
-				WR_HOST = "http://" + Application.application.parameters.host;
+				WR_HOST = "https://" + Application.application.parameters.host;
 			}
 			else {
-				WR_HOST = 'http://www.werelate.org';
+				WR_HOST = 'https://www.werelate.org';
 			}
 			WR_INDEX_URL = WR_HOST + "/w/index.php";
 			WR_WIKI_PATH = WR_HOST + "/wiki/";
