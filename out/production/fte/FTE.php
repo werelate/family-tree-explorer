@@ -71,7 +71,7 @@ if ( hasProductInstall && !hasRequestedVersion ) {
 	// if we've detected an acceptable version
 	// embed the Flash Content SWF when all tests are passed
 	AC_FL_RunContent(
-			"src", "FTE.2",
+			"src", "FTE.3",
 			"flashVars", "host=www.werelate.org&userName=<?php echo urlencode(@$_REQUEST['userName']); ?>&treeName=<?php echo urlencode(@$_REQUEST['treeName']); ?>&page=<?php echo urlencode(@$_REQUEST['page']); ?>",
 			"width", "100%",
 			"height", "100%",
@@ -95,12 +95,12 @@ if ( hasProductInstall && !hasRequestedVersion ) {
   	<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
 			id="FTE" width="100%" height="100%"
 			codebase="http://fpdownload.macromedia.com/get/flashplayer/current/swflash.cab">
-			<param name="movie" value="FTE.2.swf" />
+			<param name="movie" value="FTE.3.swf" />
 			<param name="quality" value="high" />
 			<param name="bgcolor" value="#bfcfff" />
 			<param name="allowScriptAccess" value="sameDomain" />
 			<param name="flashVars" value="host=www.werelate.org&userName=<?php echo urlencode(@$_REQUEST['userName']); ?>&treeName=<?php echo urlencode(@$_REQUEST['treeName']); ?>&page=<?php echo urlencode(@$_REQUEST['page']); ?>"/>
-			<embed src="FTE.2.swf" quality="high" bgcolor="#bfcfff"
+			<embed src="FTE.3.swf" quality="high" bgcolor="#bfcfff"
 				width="100%" height="100%" name="FTE" align="middle"
 				play="true"
 				loop="false"
