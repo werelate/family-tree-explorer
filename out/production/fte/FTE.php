@@ -71,7 +71,7 @@ if ( hasProductInstall && !hasRequestedVersion ) {
 	// if we've detected an acceptable version
 	// embed the Flash Content SWF when all tests are passed
 	AC_FL_RunContent(
-			"src", "FTE.3",
+			"src", "FTE.4",
 			"flashVars", "host=www.werelate.org&userName=<?php echo urlencode(@$_REQUEST['userName']); ?>&treeName=<?php echo urlencode(@$_REQUEST['treeName']); ?>&page=<?php echo urlencode(@$_REQUEST['page']); ?>",
 			"width", "100%",
 			"height", "100%",
@@ -100,7 +100,7 @@ if ( hasProductInstall && !hasRequestedVersion ) {
 			<param name="bgcolor" value="#bfcfff" />
 			<param name="allowScriptAccess" value="sameDomain" />
 			<param name="flashVars" value="host=www.werelate.org&userName=<?php echo urlencode(@$_REQUEST['userName']); ?>&treeName=<?php echo urlencode(@$_REQUEST['treeName']); ?>&page=<?php echo urlencode(@$_REQUEST['page']); ?>"/>
-			<embed src="FTE.3.swf" quality="high" bgcolor="#bfcfff"
+			<embed src="FTE.4.swf" quality="high" bgcolor="#bfcfff"
 				width="100%" height="100%" name="FTE" align="middle"
 				play="true"
 				loop="false"
